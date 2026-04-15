@@ -98,19 +98,31 @@ export default function Dashboard() {
       return;
     }
 
-    if (!jiraToken) {
-      setMessage({ text: "Direct client connection requires a token. Please enter your PAT.", type: "warning" });
-      return;
-    }
-
     setIsSearching(true);
-    setMessage({ text: "Connecting directly to Jira browser-to-server...", type: "info" });
+    setMessage({ text: "Checking credentials and connecting to Jira...", type: "info" });
     try {
+      let finalToken = jiraToken;
+
+      // If no manual token provided, try to fetch the saved one from server
+      if (!finalToken) {
+        const tokenRes = await fetch("/api/user/token");
+        const tokenData = await tokenRes.json();
+        if (tokenData.token) {
+          finalToken = tokenData.token;
+          // Optionally update state so user doesn't have to fetch again
+          setJiraToken(finalToken);
+        }
+      }
+
+      if (!finalToken) {
+        throw new Error("No Jira token provided and no saved token found in your profile.");
+      }
+
       const jiraUrl = "https://jira.turkcell.com.tr";
       const res = await fetch(`${jiraUrl}/rest/api/2/search`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${jiraToken}`,
+          "Authorization": `Bearer ${finalToken}`,
           "Accept": "application/json",
           "Content-Type": "application/json",
         },
