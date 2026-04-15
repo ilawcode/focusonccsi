@@ -98,45 +98,60 @@ export default function Dashboard() {
       return;
     }
 
+    if (!jiraToken) {
+      setMessage({ text: "Direct client connection requires a token. Please enter your PAT.", type: "warning" });
+      return;
+    }
+
     setIsSearching(true);
-    setMessage({ text: "", type: "" });
+    setMessage({ text: "Connecting directly to Jira browser-to-server...", type: "info" });
     try {
-      const res = await fetch("/api/jira/search", {
+      const jiraUrl = "https://jira.turkcell.com.tr";
+      const res = await fetch(`${jiraUrl}/rest/api/2/search`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jql, token: jiraToken }),
+        headers: {
+          "Authorization": `Bearer ${jiraToken}`,
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jql: jql,
+          fields: ["summary", "status", "assignee", "updated"],
+          maxResults: 50,
+        }),
       });
 
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
+      if (!res.ok) {
         const text = await res.text();
-        console.error("Non-JSON response:", text);
-        throw new Error("Server returned an error page (HTML). Verify JIRA_INSTANCE_URL and permissions.");
+        throw new Error(`Jira Error ${res.status}: ${text.slice(0, 100)}`);
       }
 
       const data = await res.json();
-      if (res.ok) {
-        setSearchResults(data.issues || []);
-        if (data.issues?.length === 0) {
-          setMessage({ text: "No issues found for this JQL", type: "info" });
-        }
-        
-        // Handle saving query if requested
-        if (shouldSaveQuery && queryName) {
-          await fetch("/api/user/queries", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: queryName, jql }),
-          });
-          setShouldSaveQuery(false);
-          setQueryName("");
-          fetchSavedQueries(); // Refresh presets
-        }
+      setSearchResults(data.issues || []);
+      
+      if (data.issues?.length === 0) {
+        setMessage({ text: "No issues found", type: "info" });
       } else {
-        setMessage({ text: data.message || "Jira search failed", type: "danger" });
+        setMessage({ text: `Success! ${data.issues.length} issues loaded directly.`, type: "success" });
       }
-    } catch (err) {
-      setMessage({ text: "Network error occurred", type: "danger" });
+      
+      // Save query preset if requested
+      if (shouldSaveQuery && queryName) {
+        await fetch("/api/user/queries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: queryName, jql }),
+        });
+        setShouldSaveQuery(false);
+        setQueryName("");
+        if (typeof fetchSavedQueries === 'function') fetchSavedQueries();
+      }
+    } catch (err: any) {
+      console.error("Direct fetch failed:", err);
+      setMessage({ 
+        text: `Direct connection failed: ${err.message}. (Is your CORS extension active?)`, 
+        type: "danger" 
+      });
     } finally {
       setIsSearching(false);
     }

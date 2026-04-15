@@ -57,7 +57,10 @@ export async function POST(req: Request) {
       }),
     });
 
+    console.log(`Jira Response Status: ${response.status} ${response.statusText}`);
     const contentType = response.headers.get("content-type");
+    console.log(`Content-Type: ${contentType}`);
+
     if (contentType && contentType.includes("application/json")) {
       const data = await response.json();
       return NextResponse.json(data);
