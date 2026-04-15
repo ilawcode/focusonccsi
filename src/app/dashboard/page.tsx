@@ -33,6 +33,23 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"timeline" | "gantt" | "import">("timeline");
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
+  const fetchSavedQueries = useCallback(async () => {
+    try {
+      const res = await fetch("/api/user/queries");
+      if (res.ok) {
+        setSavedQueries(await res.json());
+      }
+    } catch (err) {
+      console.error("Failed to fetch saved queries", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'import') {
+      fetchSavedQueries();
+    }
+  }, [activeTab, fetchSavedQueries]);
+
   const fetchTasks = useCallback(async () => {
     setIsLoadingTasks(true);
     try {
@@ -391,6 +408,8 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
       {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} />}
     </div>
   );
