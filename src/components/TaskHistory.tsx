@@ -50,13 +50,13 @@ export default function TaskHistory({ taskId }: TaskHistoryProps) {
   if (logs.length === 0) return <div className="text-center small py-3 text-muted">No edits recorded for this task yet.</div>;
 
   return (
-    <div className="bg-dark rounded p-3 mt-2 border border-secondary" style={{ maxHeight: "300px", overflowY: "auto" }}>
+    <div className="glass-panel p-3 mt-2" style={{ maxHeight: "300px", overflowY: "auto" }}>
       <h6 className="gradient-text mb-3 small fw-bold">Audit History</h6>
       <div className="timeline-container">
         {logs.map((log) => (
           <div key={log._id} className="mb-3 pb-3 border-bottom border-secondary border-opacity-50">
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small fw-bold text-light">
+              <span className="small fw-bold">
                 {log.userId.name} {log.userId.surname}
               </span>
               <span className="small text-muted" style={{ fontSize: "0.75rem" }}>
@@ -82,7 +82,7 @@ export default function TaskHistory({ taskId }: TaskHistoryProps) {
             {log.reason && (
               <div className="p-2 mt-2 rounded small" style={{ backgroundColor: "rgba(255,255,255,0.05)", borderLeft: "3px solid var(--accent-color)" }}>
                 <strong className="d-block mb-1 text-muted" style={{ fontSize: "0.75rem" }}>Justification Provided:</strong>
-                <span className="text-light">{log.reason}</span>
+                <span>{log.reason}</span>
               </div>
             )}
           </div>

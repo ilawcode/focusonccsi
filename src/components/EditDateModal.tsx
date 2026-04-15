@@ -78,21 +78,21 @@ export default function EditDateModal({
   return (
     <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.6)" }} tabIndex={-1}>
       <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content glass-panel" style={{ background: "rgba(15, 23, 42, 0.95)" }}>
+        <div className="modal-content glass-panel">
           <div className="modal-header border-secondary">
             <h5 className="modal-title gradient-text">
               Update {fieldLabel} ({taskKey})
             </h5>
-            <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
+            <button type="button" className="btn-close" onClick={onClose}></button>
           </div>
           <div className="modal-body">
             {error && <div className="alert alert-danger p-2 small">{error}</div>}
             
             <div className="mb-4">
-              <label className="form-label small text-muted">Select Date & Time</label>
+              <label className="form-label small">Select Date & Time</label>
               <input
                 type="datetime-local"
-                className="form-control bg-dark text-light border-secondary"
+                className="form-control border-secondary"
                 value={dateStr}
                 onChange={(e) => setDateStr(e.target.value)}
               />
@@ -107,7 +107,7 @@ export default function EditDateModal({
                   </span>
                 </label>
                 <textarea
-                  className="form-control bg-dark text-light border-secondary"
+                  className="form-control border-secondary"
                   rows={4}
                   placeholder="Explain why this deadline is being extended or modified..."
                   value={reason}

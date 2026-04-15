@@ -45,8 +45,8 @@ export default function TaskTable({ tasks, userRole, onRefresh }: TaskTableProps
   }
 
   return (
-    <div className="table-responsive">
-      <table className="table table-dark table-striped align-middle small mb-0">
+    <div className="table-responsive glass-panel p-2">
+      <table className="table align-middle small mb-0">
         <thead>
           <tr>
             <th style={{ width: "30px" }}></th>
@@ -93,7 +93,7 @@ export default function TaskTable({ tasks, userRole, onRefresh }: TaskTableProps
               {expandedHistory === task._id && (
                 <tr>
                   <td colSpan={9} className="p-0 border-0">
-                    <div className="px-5 py-3" style={{ backgroundColor: "rgba(0,0,0,0.2)" }}>
+                    <div className="px-5 py-3 border-top" style={{ backgroundColor: "rgba(128,128,128,0.02)" }}>
                       <TaskHistory taskId={task._id} />
                     </div>
                   </td>
@@ -130,9 +130,23 @@ function PhaseCell({ task, startField, doneField, label, allowed, onEdit }: any)
   const canEditDone = allowed.includes(doneField);
 
   const renderDate = (val: string, canEdit: boolean, field: string, fLabel: string) => {
+    let isOverdue = false;
+    
+    if (val && fLabel === "Done") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Ignore time 
+      const targetTime = new Date(val).getTime();
+      if (targetTime < today.getTime()) {
+        isOverdue = true;
+      }
+    }
+
     const formatted = val ? new Date(val).toLocaleDateString([], { month: "short", day: "numeric" }) : "--";
+    let textColor = "text-secondary";
+    if (val) textColor = isOverdue ? "text-danger fw-bold" : "text-light";
+
     return (
-      <div className={`d-flex align-items-center justify-content-between p-1 rounded ${val ? "text-light" : "text-secondary"}`} style={{ minWidth: "60px", backgroundColor: canEdit ? "rgba(59, 130, 246, 0.1)" : "transparent" }}>
+      <div className={`d-flex align-items-center justify-content-between p-1 rounded ${textColor}`} style={{ minWidth: "60px", backgroundColor: canEdit ? "rgba(59, 130, 246, 0.1)" : "transparent" }}>
         <span>{formatted}</span>
         {canEdit && (
           <button 

@@ -2,11 +2,11 @@
 
 ## What This Is
 
-A Next.js web application for project and task tracking integrated with Jira. Users can log in, sync Jira tasks using their Jira token via specific search criteria, assign tasks to themselves, and track task timelines. The dashboard provides a timeline view categorized by phases (BE Analysis, BE Dev, Test, FE, Mobile) tailored to specific user roles (BE Analyst, BE Dev, Web, Mobile).
+A Next.js web application for project and task tracking integrated with Jira. Users can log in, sync Jira tasks using their Jira token via specific search criteria, assign tasks to themselves, and track task timelines and audit histories with strict justification enforcement.
 
 ## Core Value
 
-Provide role-based, chronological visualization and tracking of Jira project tasks to ensure deadlines are monitored and roles can seamlessly log and view their specific phase dates.
+Provide role-based, chronological visualization and tracking of Jira project tasks to ensure deadlines are monitored and roles can seamlessly log and view their specific phase dates with full accountability.
 
 ## Requirements
 
@@ -14,60 +14,35 @@ Provide role-based, chronological visualization and tracking of Jira project tas
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
-
-### Active
-
-<!-- Current scope. Building toward these. -->
-
-- [ ] User authentication (Login/Register with Name, Surname, Email, Password)
-- [ ] Connect Jira utilizing Personal Access Tokens
-- [ ] Fetch Jira tasks based on specific search criteria
-- [ ] Allow users to self-assign fetched Jira tasks
-- [ ] Role-based access control (Roles: BE Analyst, BE Dev, Web, Mobile)
-- [ ] Role-specific task date entry (Start/Done dates for phase)
-- [ ] Detailed audit trail (Who entered/changed dates and when)
-- [ ] Timeline visualization dashboard sorting tasks by approaching deadline
-- [ ] Distinct view for overdue tasks ("Tarihi Geçenler" tab)
-- [ ] Summary views per user for their own entered dates
+- [x] **Foundation**: User authentication and premium dark-mode UI system.
+- [x] **Jira**: Dynamic search and task import via proxy API.
+- [x] **Timeline**: Granular phase tracking (14 dates) for 7 specialized roles.
+- [x] **Auditing**: Compulsory 100-character justification for every date edit.
+- [x] **Visualization**: Interactive Gantt and Table dashboards with role-based sorting.
+- [x] **Analytics**: Real-time summary cards for overdue and upcoming targets.
 
 ### Out of Scope
 
-<!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->
-
-- [Non-Jira task management] — The system relies exclusively on Jira as the source of truth for tasks.
+- [**Non-Jira task management**] — The system relies exclusively on Jira as the source of truth for tasks.
+- [**Sequential Phase Blocking**] — Users explicitly requested the freedom to enter any date in any order.
 
 ## Context
 
-The application aims to simplify task tracking across multiple disciplines (Backend, Testing, Frontend, Mobile) by layering a timeline and deadline-oriented dashboard over standard Jira tasks. It relies heavily on role-based views.
+The application simplifies task tracking across Backend, Frontend (Web), Mobile, and Testing disciplines. It acts as a specialized management layer on top of Jira, ensuring that every project phase has a clear target date and that any changes to those targets are documented and justified.
 
 ## Constraints
 
-- **Tech Stack**: Next.js — User requested to build the app with Next.js.
-- **Data Source**: Jira API — All initial task data and definitions must originate from an integrated Jira instance.
+- **Tech Stack**: Next.js 15+, MongoDB, NextAuth.js.
+- **Data Source**: Jira API (PAT-based auth requested per session).
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Next.js App Router | Modern default for Next.js apps, provides good performance and API routes. | — Pending |
+| Next.js App Router | Modern default, provides excellent performance and secure API routes. | Success |
+| AuditLog Collection | Storing reasons and diffs separately ensures the primary Task document stays performant. | Success |
+| Session-based PAT | Storing Jira tokens only in memory/session increases security. | Success |
+| Mandatory Justification | Enforcing 100+ chars for edits ensures high accountability in tracking. | Success |
 
 ---
-*Last updated: 2026-04-14 after initialization*
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+*Last updated: 2026-04-15 after Phase 5*

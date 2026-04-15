@@ -1,11 +1,28 @@
 import { NextResponse } from "next/server";
 import jiraFields from "@/config/jira-fields.json";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import { decrypt } from "@/lib/encryption";
 
 export async function POST(req: Request) {
   try {
-    const { jql, token } = await req.json();
+    const { jql, token: providedToken } = await req.json();
+    let finalToken = providedToken;
 
-    if (!jql || !token) {
+    if (!finalToken) {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.email) {
+        await connectDB();
+        const user = await User.findOne({ email: session.user.email }).select("+jiraTokenEncrypted");
+        if (user?.jiraTokenEncrypted) {
+          finalToken = decrypt(user.jiraTokenEncrypted);
+        }
+      }
+    }
+
+    if (!jql || !finalToken) {
       return NextResponse.json(
         { message: "JQL and Token are required" },
         { status: 400 }
@@ -22,11 +39,14 @@ export async function POST(req: Request) {
 
     // Prepare fields from config
     const fields = jiraFields.join(",");
+    const fullUrl = `${jiraUrl}/rest/api/2/search`;
+    
+    console.log(`Connecting to Jira: ${fullUrl}`);
 
-    const response = await fetch(`${jiraUrl}/rest/api/3/search`, {
+    const response = await fetch(fullUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
+        "Authorization": `Bearer ${finalToken}`,
         "Accept": "application/json",
         "Content-Type": "application/json",
       },
@@ -37,16 +57,17 @@ export async function POST(req: Request) {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json();
+      return NextResponse.json(data);
+    } else {
+      const text = await response.text();
       return NextResponse.json(
-        { message: "Jira API error", details: errorData },
-        { status: response.status }
+        { message: "Jira returned non-JSON response. Check your Instance URL.", details: text.slice(0, 200) },
+        { status: 500 }
       );
     }
-
-    const data = await response.json();
-    return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(
       { message: error.message || "Something went wrong" },

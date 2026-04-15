@@ -4,13 +4,6 @@ interface GanttChartProps {
   tasks: any[];
 }
 
-// Helper to calculate days between two dates
-const getDaysBetween = (start: string, end: string) => {
-  const d1 = new Date(start);
-  const d2 = new Date(end);
-  return Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
-};
-
 export default function GanttChart({ tasks }: GanttChartProps) {
   if (!tasks || tasks.length === 0) {
     return <div className="text-center p-5 text-muted">No tasks available for Gantt view.</div>;
@@ -39,110 +32,91 @@ export default function GanttChart({ tasks }: GanttChartProps) {
     }
   });
 
-  // Default fallback if no valid dates
   if (minDate > maxDate) {
-    return <div className="text-center p-5 text-muted">No timeline data available across imported tasks. Please add Start/Done dates.</div>;
+    return <div className="text-center p-5 text-muted">No timeline data available. Please add dates to tasks.</div>;
   }
 
-  // Add a 7-day buffer to start and end
   minDate -= 7 * 24 * 60 * 60 * 1000;
   maxDate += 7 * 24 * 60 * 60 * 1000;
   const totalDuration = maxDate - minDate;
 
-  // Calculate percentage left offset
   const getLeftPercentage = (dateString: string) => {
     if (!dateString) return 0;
     const dateProgress = new Date(dateString).getTime() - minDate;
     return (dateProgress / totalDuration) * 100;
   };
 
-  // Calculate percentage width (duration)
   const getWidthPercentage = (startString: string, endString: string) => {
     if (!startString || !endString) return 0;
     const startProgress = new Date(startString).getTime();
     const endProgress = new Date(endString).getTime();
-    
-    // Ensure minimum visual width of 1%
     const diff = Math.max(endProgress - startProgress, totalDuration * 0.01);
     return (diff / totalDuration) * 100;
   };
 
   const phases = [
-    { label: "BE Anal", start: "beAnalystStart", end: "beAnalystDone", color: "#3b82f6" },   // Blue
-    { label: "BE Dev", start: "beDevStart", end: "beDevDone", color: "#8b5cf6" },         // Purple
-    { label: "Web Ana", start: "webAnalystStart", end: "webAnalystDone", color: "#10b981" },// Green
-    { label: "Web Dev", start: "webDevStart", end: "webDevDone", color: "#059669" },      // Dark Green
-    { label: "Mob Ana", start: "mobileAnalystStart", end: "mobileAnalystDone", color: "#f59e0b" }, // Yellow
-    { label: "Mob Dev", start: "mobileDevStart", end: "mobileDevDone", color: "#d97706" }, // Orange
-    { label: "Test", start: "testStart", end: "testDone", color: "#ef4444" }              // Red
+    { label: "BE Ana", start: "beAnalystStart", end: "beAnalystDone", color: "#3b82f6" },
+    { label: "BE Dev", start: "beDevStart", end: "beDevDone", color: "#8b5cf6" },
+    { label: "Web Ana", start: "webAnalystStart", end: "webAnalystDone", color: "#10b981" },
+    { label: "Web Dev", start: "webDevStart", end: "webDevDone", color: "#059669" },
+    { label: "Mob Ana", start: "mobileAnalystStart", end: "mobileAnalystDone", color: "#f59e0b" },
+    { label: "Mob Dev", start: "mobileDevStart", end: "mobileDevDone", color: "#d97706" },
+    { label: "Test", start: "testStart", end: "testDone", color: "#ef4444" }
   ];
 
   return (
-    <div className="table-responsive bg-dark p-3 rounded border border-secondary" style={{ overflowX: "auto" }}>
-      <div style={{ minWidth: "800px" }}>
-        
+    <div className="glass-panel p-4" style={{ overflowX: "auto" }}>
+      <div style={{ minWidth: "900px" }}>
         {/* Header timeline indicator */}
-        <div className="d-flex mb-3 position-relative text-muted small border-bottom border-secondary pb-2" style={{ height: "30px" }}>
+        <div className="d-flex mb-4 position-relative text-muted small pb-2" style={{ height: "40px", borderBottom: "1px solid var(--panel-border)" }}>
           <div className="position-absolute" style={{ left: 0 }}>{new Date(minDate).toLocaleDateString()}</div>
-          <div className="position-absolute text-center" style={{ left: "50%", transform: "translateX(-50%)" }}>Timeline Overview</div>
+          <div className="position-absolute text-center" style={{ left: "50%", transform: "translateX(-50%)" }}>Timeline Visualization</div>
           <div className="position-absolute" style={{ right: 0 }}>{new Date(maxDate).toLocaleDateString()}</div>
         </div>
 
-        {/* Task Rows */}
         {tasks.map(task => (
-          <div key={task._id} className="row g-0 mb-3 align-items-center">
-            
-            {/* Task Info Column */}
-            <div className="col-2 text-truncate pe-3">
-              <span className="fw-bold small">{task.key}</span>
-              <br/>
-              <span className="text-muted" style={{ fontSize: "0.7rem" }} title={task.summary}>{task.summary}</span>
+          <div key={task._id} className="d-flex mb-4 align-items-center">
+            <div style={{ width: "180px", flexShrink: 0 }} className="pe-3 border-end">
+              <div className="fw-bold truncate" title={task.key}>{task.key}</div>
+              <div className="text-muted small truncate" title={task.summary} style={{ fontSize: "0.75rem" }}>{task.summary}</div>
             </div>
             
-            {/* Gantt Area Column */}
-            <div className="col-10 position-relative" style={{ height: "40px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "4px" }}>
-              
-              {/* Background grid lines */}
-              <div className="position-absolute h-100 border-start border-secondary opacity-25" style={{ left: "25%" }}></div>
-              <div className="position-absolute h-100 border-start border-secondary opacity-25" style={{ left: "50%" }}></div>
-              <div className="position-absolute h-100 border-start border-secondary opacity-25" style={{ left: "75%" }}></div>
+            <div className="flex-grow-1 position-relative ms-3" style={{ height: "45px", backgroundColor: "rgba(128,128,128,0.05)", borderRadius: "8px" }}>
+              {/* Vertical grids */}
+              <div className="position-absolute h-100 border-start" style={{ left: "25%", borderColor: "var(--panel-border)", opacity: 0.3 }}></div>
+              <div className="position-absolute h-100 border-start" style={{ left: "50%", borderColor: "var(--panel-border)", opacity: 0.3 }}></div>
+              <div className="position-absolute h-100 border-start" style={{ left: "75%", borderColor: "var(--panel-border)", opacity: 0.3 }}></div>
 
-              {/* Phase Bars */}
               {phases.map((phase, index) => {
                 const startDate = task[phase.start];
                 const endDate = task[phase.end];
-                
                 if (startDate && endDate) {
                   const left = getLeftPercentage(startDate);
                   const width = getWidthPercentage(startDate, endDate);
-                  
-                  // Top offset ensures overlapping bars are still legible (waterfall effect)
-                  const topOffset = `${10 + (index * 2)}px`;
+                  const topOffset = `${8 + (index * 3)}px`;
 
                   return (
                     <div
                       key={phase.label}
                       className="position-absolute rounded shadow-sm d-flex align-items-center justify-content-center"
-                      title={`${phase.label} \nStart: ${new Date(startDate).toLocaleString()} \nDone: ${new Date(endDate).toLocaleString()}`}
+                      title={`${phase.label}\n${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`}
                       style={{
                         left: `${left}%`,
                         width: `${width}%`,
                         top: topOffset,
-                        height: "12px",
+                        height: "14px",
                         backgroundColor: phase.color,
-                        opacity: 0.85,
-                        cursor: "pointer",
-                        minWidth: "20px",
-                        transition: "all 0.2s ease"
+                        opacity: 0.9,
+                        minWidth: "15px",
+                        zIndex: 10 + index
                       }}
                     >
-                      {width > 5 && <span className="text-white fw-bold" style={{ fontSize: "0.5rem" }}>{phase.label}</span>}
+                      {width > 8 && <span className="text-white fw-bold" style={{ fontSize: "0.55rem" }}>{phase.label}</span>}
                     </div>
                   );
                 }
                 return null;
               })}
-
             </div>
           </div>
         ))}

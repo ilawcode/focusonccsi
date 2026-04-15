@@ -48,7 +48,7 @@
 
 ---
 
-## Phase 5: Overdue View & Summaries
+## Phase 5: Overdue View & Summaries [COMPLETED]
 **Goal**: Add role-centric "Overdue" tabs and personal summary performance views to complete the tracking loop.
 **Requirements**: DASH-04, DASH-05
 **UI hint**: yes
@@ -57,3 +57,16 @@
 1. Users can switch to a "Tarihi Geçenler" (Overdue) tab that only displays tasks missing the user's role specific deadlines.
 2. Each user has a "My Summary" view showing the historical velocity or brief overview of the dates they personally contributed to.
 3. Final aesthetic checks are conducted to ensure robust micro-animations and non-generic color palettes apply consistently.
+
+---
+
+## Phase 6: Jira Profile & Query Management [TODO]
+**Goal**: Implement a secure user profile section to manage Jira credentials (encrypted) and save frequent JQL queries.
+**Requirements**: USER-04, INT-04, INT-05
+**UI hint**: yes
+
+### Success Criteria
+1. User can navigate to a "Profile" page and save their Jira PAT (encrypted in DB).
+2. Users can save, name, and delete multiple JQL queries.
+3. During Jira Import, users can select a saved token or query from a dropdown.
+4. Accessing saved tokens requires re-authentication or is masked in UI.

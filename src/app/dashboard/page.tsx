@@ -5,11 +5,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import TaskTable from "@/components/TaskTable";
 import GanttChart from "@/components/GanttChart";
+import RoleAnalyticsWidget from "@/components/RoleAnalyticsWidget";
+import ThemeSelector from "@/components/ThemeSelector";
+import ProfileModal from "@/components/ProfileModal";
 
 export default function Dashboard() {
   const { data: session, status, update } = useSession();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Jira State
   const [jiraToken, setJiraToken] = useState("");
@@ -18,6 +22,11 @@ export default function Dashboard() {
   const [isSearching, setIsSearching] = useState(false);
   const [importingId, setImportingId] = useState<string | null>(null);
   const [message, setMessage] = useState({ text: "", type: "" });
+  
+  // Saved Queries State
+  const [savedQueries, setSavedQueries] = useState<any[]>([]);
+  const [shouldSaveQuery, setShouldSaveQuery] = useState(false);
+  const [queryName, setQueryName] = useState("");
   
   // Dashboard Visuals State
   const [tasks, setTasks] = useState<any[]>([]);
@@ -67,8 +76,8 @@ export default function Dashboard() {
 
   const handleJiraSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!jiraToken) {
-      setMessage({ text: "Please enter your Jira PAT first", type: "danger" });
+    if (!jql) {
+      setMessage({ text: "Please enter a JQL query", type: "danger" });
       return;
     }
 
@@ -81,11 +90,30 @@ export default function Dashboard() {
         body: JSON.stringify({ jql, token: jiraToken }),
       });
 
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned an error page (HTML). Verify JIRA_INSTANCE_URL and permissions.");
+      }
+
       const data = await res.json();
       if (res.ok) {
         setSearchResults(data.issues || []);
         if (data.issues?.length === 0) {
           setMessage({ text: "No issues found for this JQL", type: "info" });
+        }
+        
+        // Handle saving query if requested
+        if (shouldSaveQuery && queryName) {
+          await fetch("/api/user/queries", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: queryName, jql }),
+          });
+          setShouldSaveQuery(false);
+          setQueryName("");
+          fetchSavedQueries(); // Refresh presets
         }
       } else {
         setMessage({ text: data.message || "Jira search failed", type: "danger" });
@@ -140,13 +168,25 @@ export default function Dashboard() {
   return (
     <div className="container py-5">
       <header className="d-flex justify-content-between align-items-center mb-5 glass-panel p-3">
-        <div>
-          <h4 className="mb-0 gradient-text">FocusOnCCSI</h4>
-          <small className="text-muted">Welcome, {session?.user?.name}</small>
+        <div className="d-flex align-items-center gap-4">
+          <div>
+            <h4 className="mb-0 gradient-text">FocusOnCCSI</h4>
+            <small className="text-muted">Welcome, {session?.user?.name}</small>
+          </div>
+          <ThemeSelector />
         </div>
-        <button onClick={() => signOut()} className="btn btn-outline-danger btn-sm">
-          Logout
-        </button>
+        <div className="d-flex align-items-center gap-3">
+          <button 
+            onClick={() => setIsProfileOpen(true)} 
+            className="btn btn-outline-primary btn-sm rounded-pill px-3"
+            title="Profile & Settings"
+          >
+            ⚙ Settings
+          </button>
+          <button onClick={() => signOut()} className="btn btn-outline-danger btn-sm">
+            Logout
+          </button>
+        </div>
       </header>
 
       {!userRole ? (
@@ -216,7 +256,10 @@ export default function Dashboard() {
                  {isLoadingTasks ? (
                    <div className="text-center p-5"><div className="spinner-border text-primary" /></div>
                  ) : (
-                   <TaskTable tasks={tasks} userRole={userRole} onRefresh={fetchTasks} />
+                   <>
+                     <RoleAnalyticsWidget tasks={tasks} userRole={userRole} />
+                     <TaskTable tasks={tasks} userRole={userRole} onRefresh={fetchTasks} />
+                   </>
                  )}
                </div>
              </div>
@@ -246,37 +289,76 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                <form onSubmit={handleJiraSearch} className="row g-3 mb-4">
-                  <div className="col-md-4">
-                    <label className="form-label small text-muted">Jira Personal Access Token</label>
-                    <input
-                      type="password"
-                      className="form-control form-control-sm bg-dark text-light border-secondary"
-                      placeholder="Enter PAT..."
-                      value={jiraToken}
-                      onChange={(e) => setJiraToken(e.target.value)}
-                    />
+                <form onSubmit={handleJiraSearch} className="mb-4">
+                  <div className="row g-3 mb-3">
+                    <div className="col-md-4">
+                      <label className="form-label small text-muted">Jira Personal Access Token</label>
+                      <input
+                        type="password"
+                        className="form-control form-control-sm border-secondary"
+                        placeholder="Saved token will be used if empty..."
+                        value={jiraToken}
+                        onChange={(e) => setJiraToken(e.target.value)}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <div className="d-flex justify-content-between">
+                        <label className="form-label small text-muted">JQL Query</label>
+                        {savedQueries.length > 0 && (
+                          <div className="dropdown d-inline-block">
+                            <button className="btn btn-link btn-sm p-0 dropdown-toggle text-decoration-none small text-accent" type="button" data-bs-toggle="dropdown">
+                              Presets
+                            </button>
+                            <ul className="dropdown-menu shadow">
+                              {savedQueries.map(q => (
+                                <li key={q._id}><button className="dropdown-item small" type="button" onClick={() => setJql(q.jql)}>{q.name}</button></li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        className="form-control form-control-sm border-secondary"
+                        placeholder="project = 'PRJ'..."
+                        value={jql}
+                        onChange={(e) => setJql(e.target.value)}
+                      />
+                    </div>
+                    <div className="col-md-2 d-flex align-items-end">
+                      <button type="submit" className="btn btn-premium btn-sm w-100" disabled={isSearching}>
+                        {isSearching ? "Searching..." : "Search Jira"}
+                      </button>
+                    </div>
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label small text-muted">JQL Query</label>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm bg-dark text-light border-secondary"
-                      placeholder="project = 'PRJ'..."
-                      value={jql}
-                      onChange={(e) => setJql(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-md-2 d-flex align-items-end">
-                    <button type="submit" className="btn btn-premium btn-sm w-100" disabled={isSearching}>
-                      {isSearching ? "Searching..." : "Search Jira"}
-                    </button>
+                  
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="form-check form-switch small">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        id="saveQueryCheck" 
+                        checked={shouldSaveQuery}
+                        onChange={(e) => setShouldSaveQuery(e.target.checked)}
+                      />
+                      <label className="form-check-label text-muted" htmlFor="saveQueryCheck">Save this query as preset</label>
+                    </div>
+                    {shouldSaveQuery && (
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm border-secondary w-auto" 
+                        placeholder="Preset Name (e.g. My Tasks)" 
+                        value={queryName}
+                        onChange={(e) => setQueryName(e.target.value)}
+                        style={{ maxWidth: '200px' }}
+                      />
+                    )}
                   </div>
                 </form>
 
                 {searchResults.length > 0 && (
                   <div className="table-responsive">
-                    <table className="table table-dark table-hover align-middle small">
+                    <table className="table table-hover align-middle small">
                       <thead>
                         <tr>
                           <th>Key</th>
@@ -309,8 +391,7 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-        </div>
-      )}
+      {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} />}
     </div>
   );
 }

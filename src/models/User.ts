@@ -26,6 +26,11 @@ const UserSchema = new Schema(
       enum: ["BE Analist", "BE Dev", "Web Analist", "Web Dev", "Mobile Analist", "Mobile Dev", "Test", null],
       default: null,
     },
+    jiraTokenEncrypted: {
+      type: String,
+      default: null,
+      select: false, // Don't return this by default for security
+    },
   },
   { timestamps: true }
 );

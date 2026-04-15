@@ -23,6 +23,9 @@
 - [ ] **DASH-03**: Tasks are sorted dynamically from nearest approaching date to furthest.
 - [ ] **DASH-04**: Role-specific "Overdue" (Tarihi Geçenler) tab displays tasks that have passed the deadline for the user's role.
 - [ ] **DASH-05**: User can see a summarized overview of all dates they have personally contributed.
+- [ ] **USER-04**: User can save and manage their Jira PAT in their profile securely (encrypted storage).
+- [ ] **INT-04**: User can save, name, and delete frequent JQL queries as presets for reuse.
+- [ ] **INT-05**: User can select from saved credentials or queries during the Jira Import process.
 
 ## v2 Requirements
 - [ ] Social logins (OAuth).
