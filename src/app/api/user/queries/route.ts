@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import connectDB from "@/lib/mongodb";
+import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import SavedQuery from "@/models/SavedQuery";
 
@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  await connectDB();
+  await dbConnect();
   const user = await User.findOne({ email: session.user.email });
   if (!user) return NextResponse.json({ message: "User not found" }, { status: 404 });
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await connectDB();
+    await dbConnect();
     const user = await User.findOne({ email: session.user.email });
     
     const newQuery = await SavedQuery.create({

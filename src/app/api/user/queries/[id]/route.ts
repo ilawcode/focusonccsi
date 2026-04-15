@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import connectDB from "@/lib/mongodb";
+import dbConnect from "@/lib/db";
 import SavedQuery from "@/models/SavedQuery";
 
 export async function DELETE(
@@ -14,7 +14,7 @@ export async function DELETE(
   }
 
   try {
-    await connectDB();
+    await dbConnect();
     // User can only delete their own queries
     const query = await SavedQuery.findById(params.id);
     if (!query) {

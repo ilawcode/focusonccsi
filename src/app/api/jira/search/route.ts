@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import jiraFields from "@/config/jira-fields.json";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import connectDB from "@/lib/mongodb";
+import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import { decrypt } from "@/lib/encryption";
 
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     if (!finalToken) {
       const session = await getServerSession(authOptions);
       if (session?.user?.email) {
-        await connectDB();
+        await dbConnect();
         const user = await User.findOne({ email: session.user.email }).select("+jiraTokenEncrypted");
         if (user?.jiraTokenEncrypted) {
           finalToken = decrypt(user.jiraTokenEncrypted);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import connectDB from "@/lib/mongodb";
+import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import { encrypt } from "@/lib/encryption";
 
@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  await connectDB();
+  await dbConnect();
   const user = await User.findOne({ email: session.user.email }).select("+jiraTokenEncrypted");
   
   return NextResponse.json({
@@ -31,7 +31,7 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    await connectDB();
+    await dbConnect();
     const encrypted = jiraToken ? encrypt(jiraToken) : null;
     
     await User.findOneAndUpdate(
