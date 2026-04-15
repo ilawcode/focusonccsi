@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     // Get current user ID
     const user = await User.findOne({ email: session.user.email });
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      return NextResponse.json({ message: "User not found!" }, { status: 404 });
     }
 
     // Upsert the task
