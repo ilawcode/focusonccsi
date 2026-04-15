@@ -1,6 +1,6 @@
 # Roadmap
 
-## Phase 1: Foundation & Authentication
+## Phase 1: Foundation & Authentication [COMPLETED]
 **Goal**: Initialize Next.js project with a visually stunning, dynamic UI system and implement secure role-based user authentication.
 **Requirements**: AUTH-01, AUTH-02, AUTH-03
 **UI hint**: yes
@@ -12,7 +12,7 @@
 
 ---
 
-## Phase 2: Jira Auth & Task Fetching
+## Phase 2: Jira Auth & Task Fetching [COMPLETED]
 **Goal**: Connect to Jira via PAT to fetch and import tasks into the local project tracking system.
 **Requirements**: INT-01, INT-02, INT-03
 **UI hint**: yes
@@ -24,7 +24,7 @@
 
 ---
 
-## Phase 3: Timeline & Audit Data Layer
+## Phase 3: Timeline & Audit Data Layer [COMPLETED]
 **Goal**: Build the core data schemas and backend logic required to manage phase dates and track user edits accurately.
 **Requirements**: TASK-01, TASK-02, TASK-03
 **UI hint**: no
@@ -36,7 +36,7 @@
 
 ---
 
-## Phase 4: Main Dashboard & Visualization
+## Phase 4: Main Dashboard & Visualization [COMPLETED]
 **Goal**: Construct the central Timeline dashboard where tasks are ordered by urgency specific to the user's role.
 **Requirements**: DASH-01, DASH-02, DASH-03
 **UI hint**: yes
