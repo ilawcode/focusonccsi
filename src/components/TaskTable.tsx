@@ -74,7 +74,10 @@ export default function TaskTable({ tasks, userRole, onRefresh }: TaskTableProps
                   </button>
                 </td>
                 <td>
-                  <span className="fw-bold">{task.key}</span>
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="badge bg-secondary">{task.key}</span>
+                    <span className="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 small">{task.type}</span>
+                  </div>
                   <div className="text-muted text-truncate" style={{ maxWidth: "150px" }} title={task.summary}>
                     {task.summary}
                   </div>

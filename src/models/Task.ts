@@ -23,6 +23,12 @@ const TaskSchema = new Schema(
     status: {
       type: String,
     },
+    description: {
+      type: String,
+    },
+    type: {
+      type: String,
+    },
     // Timeline Phase Dates
     beAnalystStart: { type: Date, default: null },
     beAnalystDone: { type: Date, default: null },

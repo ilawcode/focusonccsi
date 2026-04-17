@@ -101,41 +101,21 @@ export default function Dashboard() {
     setIsSearching(true);
     setMessage({ text: "Checking credentials and connecting to Jira...", type: "info" });
     try {
-      let finalToken = jiraToken;
-
-      // If no manual token provided, try to fetch the saved one from server
-      if (!finalToken) {
-        const tokenRes = await fetch("/api/user/token");
-        const tokenData = await tokenRes.json();
-        if (tokenData.token) {
-          finalToken = tokenData.token;
-          // Optionally update state so user doesn't have to fetch again
-          setJiraToken(finalToken);
-        }
-      }
-
-      if (!finalToken) {
-        throw new Error("No Jira token provided and no saved token found in your profile.");
-      }
-
-      const jiraUrl = "https://jira.turkcell.com.tr";
-      const res = await fetch(`${jiraUrl}/rest/api/2/search`, {
+      // Use the internal API proxy to avoid CORS issues and handle token security on server
+      const res = await fetch("/api/jira/search", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${finalToken}`,
-          "Accept": "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          jql: jql,
-          fields: ["summary", "status", "assignee", "updated"],
-          maxResults: 50,
+        body: JSON.stringify({ 
+          jql, 
+          token: jiraToken || undefined // Only send if manually provided, otherwise proxy handles it
         }),
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Jira Error ${res.status}: ${text.slice(0, 100)}`);
+        const data = await res.json();
+        throw new Error(data.message || `Jira Error ${res.status}`);
       }
 
       const data = await res.json();
@@ -144,7 +124,7 @@ export default function Dashboard() {
       if (data.issues?.length === 0) {
         setMessage({ text: "No issues found", type: "info" });
       } else {
-        setMessage({ text: `Success! ${data.issues.length} issues loaded directly.`, type: "success" });
+        setMessage({ text: `Success! ${data.issues.length} issues loaded via secure proxy.`, type: "success" });
       }
       
       // Save query preset if requested
@@ -169,17 +149,21 @@ export default function Dashboard() {
     }
   };
 
-  const handleImport = async (issue: any) => {
-    setImportingId(issue.id);
+  const handleImport = async (targetIssues: any[]) => {
+    const isBulk = targetIssues.length > 1;
+    setImportingId(isBulk ? "bulk" : targetIssues[0].id);
+    setMessage({ text: isBulk ? `Importing ${targetIssues.length} tasks...` : "Importing task...", type: "info" });
+
     try {
       const res = await fetch("/api/tasks/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ issue }),
+        body: JSON.stringify({ issues: targetIssues }),
       });
 
       if (res.ok) {
-        setMessage({ text: `Task ${issue.key} imported successfully!`, type: "success" });
+        const data = await res.json();
+        setMessage({ text: data.message || "Import successful!", type: "success" });
         fetchTasks(); // Refresh tasks list
       } else {
         const data = await res.json();
@@ -401,13 +385,31 @@ export default function Dashboard() {
                 </form>
 
                 {searchResults.length > 0 && (
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="mb-0 text-muted">{searchResults.length} issues found</h6>
+                    <button 
+                      className="btn btn-outline-accent btn-sm rounded-pill px-4"
+                      onClick={() => handleImport(searchResults)}
+                      disabled={importingId !== null}
+                    >
+                      {importingId === "bulk" ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Importing All...
+                        </>
+                      ) : "Import All Results"}
+                    </button>
+                  </div>
+                )}
+
+                {searchResults.length > 0 && (
                   <div className="table-responsive">
                     <table className="table table-hover align-middle small">
                       <thead>
                         <tr>
                           <th>Key</th>
                           <th>Summary</th>
-                          <th>Status</th>
+                          <th>Type</th>
                           <th>Action</th>
                         </tr>
                       </thead>
@@ -416,12 +418,12 @@ export default function Dashboard() {
                           <tr key={issue.id}>
                             <td><span className="badge bg-secondary">{issue.key}</span></td>
                             <td>{issue.fields.summary}</td>
-                            <td><span className="small text-muted">{issue.fields.status?.name}</span></td>
+                            <td><span className="small text-muted">{issue.fields.issuetype?.name}</span></td>
                             <td>
                               <button
                                 className="btn btn-outline-primary btn-sm py-0 px-2"
-                                onClick={() => handleImport(issue)}
-                                disabled={importingId === issue.id}
+                                onClick={() => handleImport([issue])}
+                                disabled={importingId !== null}
                               >
                                 {importingId === issue.id ? "..." : "Import"}
                               </button>

@@ -13,7 +13,8 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 - Phase 3: Timeline & Audit Data Layer is COMPLETED.
 - Phase 4: Main Dashboard & Visualization is COMPLETED.
 - Phase 5: Overdue View & Summaries is COMPLETED.
-- Phase 6: Jira Profile & Query Management is PLANNED.
+- Phase 6: Jira Profile & Query Management is TODO.
+- Phase 7: Jira Task Import is PLANNED.
 
 ## Recent Context
 The Project Tracking Dashboard is now fully functional.
@@ -24,8 +25,12 @@ The Project Tracking Dashboard is now fully functional.
 - **Visualization**: Dual-view (Table & Gantt) dashboard with role-based sorting.
 - **Analytics**: Real-time metrics for Overdue, Due Soon, and Total tasks.
 
+## Accumulated Context
+### Roadmap Evolution
+- Phase 7 added: Jira Task Import. This phase focuses on resolving connection issues (CORS) and stabilizing the task import workflow.
+
 ## Session
-**Stopped at**: Task fully completed. Final build verified.
+**Stopped at**: Phase 7 added and CORS fix identified.
 
 ## Blockers
 - None.

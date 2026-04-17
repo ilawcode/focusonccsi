@@ -58,6 +58,16 @@
 2. Each user has a "My Summary" view showing the historical velocity or brief overview of the dates they personally contributed to.
 3. Final aesthetic checks are conducted to ensure robust micro-animations and non-generic color palettes apply consistently.
 
+### Phase 7: Jira Task Import
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 7 to break down)
+
 ---
 
 ## Phase 6: Jira Profile & Query Management [TODO]
