@@ -99,23 +99,43 @@ export default function Dashboard() {
     }
 
     setIsSearching(true);
-    setMessage({ text: "Checking credentials and connecting to Jira...", type: "info" });
+    setMessage({ text: "Bypassing WAF: Connecting to Jira directly from your browser...", type: "info" });
+    
     try {
-      // Use the internal API proxy to avoid CORS issues and handle token security on server
-      const res = await fetch("/api/jira/search", {
+      // 1. Get the token (either from state or from our secure server)
+      let tokenToUse = jiraToken;
+      if (!tokenToUse) {
+        const tokenRes = await fetch("/api/user/token");
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          tokenToUse = tokenData.token;
+        }
+      }
+
+      if (!tokenToUse) {
+        throw new Error("Jira Token not found. Please enter it in settings or provide it manually.");
+      }
+
+      // 2. Fetch directly from Jira (To work, user MUST have CORS extension enabled!)
+      const jiraUrl = "https://jira.turkcell.com.tr";
+      
+      const res = await fetch(`${jiraUrl}/rest/api/2/search`, {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${tokenToUse}`,
+          "Accept": "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
           jql, 
-          token: jiraToken || undefined // Only send if manually provided, otherwise proxy handles it
+          fields: ["summary", "status", "description", "priority", "assignee", "created", "updated", "issuetype"],
+          maxResults: 50
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || `Jira Error ${res.status}`);
+        const errorText = await res.text();
+        throw new Error(`Jira returned ${res.status}: ${errorText.slice(0, 100)}`);
       }
 
       const data = await res.json();
@@ -124,7 +144,7 @@ export default function Dashboard() {
       if (data.issues?.length === 0) {
         setMessage({ text: "No issues found", type: "info" });
       } else {
-        setMessage({ text: `Success! ${data.issues.length} issues loaded via secure proxy.`, type: "success" });
+        setMessage({ text: `Success! ${data.issues.length} issues loaded directly via browser.`, type: "success" });
       }
       
       // Save query preset if requested
@@ -139,9 +159,9 @@ export default function Dashboard() {
         if (typeof fetchSavedQueries === 'function') fetchSavedQueries();
       }
     } catch (err: any) {
-      console.error("Direct fetch failed:", err);
+      console.error("Browser-side fetch failed:", err);
       setMessage({ 
-        text: `Direct connection failed: ${err.message}. (Is your CORS extension active?)`, 
+        text: `Browser connection failed: ${err.message}. Lütfen CORS eklentinizin aktif olduğundan emin olun.`, 
         type: "danger" 
       });
     } finally {
