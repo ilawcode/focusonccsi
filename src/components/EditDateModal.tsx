@@ -21,9 +21,9 @@ export default function EditDateModal({
   onClose,
   onSaveSuccess,
 }: EditDateModalProps) {
-  // Format current value for datetime-local input if it exists
+  // Format current value for date input (YYYY-MM-DD)
   const initialDate = currentValue
-    ? new Date(currentValue).toISOString().slice(0, 16)
+    ? new Date(currentValue).toISOString().split('T')[0]
     : "";
 
   const [dateStr, setDateStr] = useState(initialDate);
@@ -34,7 +34,7 @@ export default function EditDateModal({
   const isFirstEntry = !currentValue;
   const isReasonValid = isFirstEntry || reason.length >= 100;
   
-  // Also check if date has changed, if not, no point in saving really, but API handles identical values too.
+  // Also check if date has changed
   const hasChanged = dateStr !== initialDate;
 
   const handleSave = async () => {
@@ -52,11 +52,14 @@ export default function EditDateModal({
     setError("");
 
     try {
+      // Normalize to UTC 00:00:00 to keep it only as a date
+      const dateToSave = dateStr ? new Date(`${dateStr}T00:00:00Z`).toISOString() : null;
+
       const res = await fetch(`/api/tasks/${taskId}/timeline`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          [fieldKey]: dateStr ? new Date(dateStr).toISOString() : null,
+          [fieldKey]: dateToSave,
           reason: isFirstEntry ? undefined : reason,
         }),
       });
@@ -89,9 +92,9 @@ export default function EditDateModal({
             {error && <div className="alert alert-danger p-2 small">{error}</div>}
             
             <div className="mb-4">
-              <label className="form-label small">Select Date & Time</label>
+              <label className="form-label small">Select Date</label>
               <input
-                type="datetime-local"
+                type="date"
                 className="form-control border-secondary"
                 value={dateStr}
                 onChange={(e) => setDateStr(e.target.value)}

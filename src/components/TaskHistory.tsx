@@ -60,7 +60,7 @@ export default function TaskHistory({ taskId }: TaskHistoryProps) {
                 {log.userId.name} {log.userId.surname}
               </span>
               <span className="small text-muted" style={{ fontSize: "0.75rem" }}>
-                {new Date(log.createdAt).toLocaleString()}
+                {new Date(log.createdAt).toLocaleDateString()}
               </span>
             </div>
             
@@ -71,11 +71,11 @@ export default function TaskHistory({ taskId }: TaskHistoryProps) {
             
             <div className="d-flex align-items-center mb-2 small" style={{ fontSize: "0.8rem" }}>
               <div className="text-danger text-decoration-line-through me-2">
-                {log.oldValue ? new Date(log.oldValue).toLocaleString() : "Not Set"}
+                {log.oldValue ? new Date(log.oldValue).toLocaleDateString() : "Not Set"}
               </div>
               <span className="text-muted me-2">➔</span>
               <div className="text-success">
-                {log.newValue ? new Date(log.newValue).toLocaleString() : "Cleared"}
+                {log.newValue ? new Date(log.newValue).toLocaleDateString() : "Cleared"}
               </div>
             </div>
             

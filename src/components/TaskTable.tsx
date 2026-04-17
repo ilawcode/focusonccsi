@@ -144,7 +144,7 @@ function PhaseCell({ task, startField, doneField, label, allowed, onEdit }: any)
       }
     }
 
-    const formatted = val ? new Date(val).toLocaleDateString([], { month: "short", day: "numeric" }) : "--";
+    const formatted = val ? new Date(val).toLocaleDateString([], { day: "2-digit", month: "2-digit", year: "numeric" }) : "--";
     let textColor = "text-secondary";
     if (val) textColor = isOverdue ? "text-danger fw-bold" : "text-light";
 
