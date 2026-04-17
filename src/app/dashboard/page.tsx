@@ -116,23 +116,13 @@ export default function Dashboard() {
         throw new Error("Jira Token not found. Please enter it in settings or provide it manually.");
       }
 
-      // 2. Fetch directly from Jira (To work, user MUST have CORS extension enabled!)
+      // 2. Fetch directly from Jira (Using GET to avoid Preflight/OPTIONS issues)
       const jiraUrl = "https://jira.turkcell.com.tr";
+      const searchUrl = `${jiraUrl}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=summary,status,description,priority,assignee,created,updated,issuetype`;
       
-      const res = await fetch(`${jiraUrl}/rest/api/2/search`, {
-        method: "POST",
-        credentials: 'include', // TARAYICI OTURUMUNU (COOKIES) KULLANMAK İÇİN
-        headers: {
-          "Authorization": `Bearer ${tokenToUse}`,
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "X-Atlassian-Token": "no-check", // CSRF KONTROLÜNÜ ATLAMAK İÇİN
-        },
-        body: JSON.stringify({ 
-          jql, 
-          fields: ["summary", "status", "description", "priority", "assignee", "created", "updated", "issuetype"],
-          maxResults: 50
-        }),
+      const res = await fetch(searchUrl, {
+        method: "GET",
+        credentials: 'include', // TARAYICI OTURUMUNU KULLANIR
       });
 
       if (!res.ok) {
