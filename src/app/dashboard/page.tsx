@@ -99,10 +99,9 @@ export default function Dashboard() {
     }
 
     setIsSearching(true);
-    setMessage({ text: "Bypassing WAF: Connecting to Jira directly from your browser...", type: "info" });
+    setMessage({ text: "Using Bridge Extension to bypass WAF...", type: "info" });
     
     try {
-      // 1. Get the token (either from state or from our secure server)
       let tokenToUse = jiraToken;
       if (!tokenToUse) {
         const tokenRes = await fetch("/api/user/token");
@@ -112,34 +111,51 @@ export default function Dashboard() {
         }
       }
 
-      if (!tokenToUse) {
-        throw new Error("Jira Token not found. Please enter it in settings or provide it manually.");
-      }
+      if (!tokenToUse) throw new Error("PAT Token not found");
 
-      // 2. Fetch directly from Jira (Using GET to avoid Preflight/OPTIONS issues)
       const jiraUrl = "https://jira.turkcell.com.tr";
-      const searchUrl = `${jiraUrl}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=summary,status,description,priority,assignee,created,updated,issuetype`;
-      
-      const res = await fetch(searchUrl, {
-        method: "GET",
-        credentials: 'include', // TARAYICI OTURUMUNU KULLANIR
+      const searchUrl = `${jiraUrl}/rest/api/2/search`;
+      const requestId = Math.random().toString(36).substring(7);
+
+      // --- BRIDGE EXTENSION LOGIC ---
+      const results: any = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("Extension bridge timed out. Eklentinin yüklü ve aktif olduğundan emin olun.")), 5000);
+        
+        const listener = (event: MessageEvent) => {
+          if (event.data.type === "GSD_JIRA_PROXY_RESPONSE" && event.data.requestId === requestId) {
+            window.removeEventListener("message", listener);
+            clearTimeout(timeout);
+            if (event.data.response?.success) {
+              resolve(event.data.response.data);
+            } else {
+              reject(new Error(event.data.response?.error || "Extension fetch failed"));
+            }
+          }
+        };
+
+        window.addEventListener("message", listener);
+
+        window.postMessage({
+          type: "GSD_JIRA_PROXY_REQUEST",
+          requestId: requestId,
+          url: searchUrl,
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${tokenToUse}`,
+            "Content-Type": "application/json",
+            "X-Atlassian-Token": "no-check"
+          },
+          body: { 
+            jql, 
+            fields: ["summary", "status", "description", "priority", "assignee", "created", "updated", "issuetype"],
+            maxResults: 50
+          }
+        }, "*");
       });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Jira returned ${res.status}: ${errorText.slice(0, 100)}`);
-      }
+      setSearchResults(results.issues || []);
+      setMessage({ text: `Success! ${results.issues.length} issues loaded via Extension Bridge.`, type: "success" });
 
-      const data = await res.json();
-      setSearchResults(data.issues || []);
-      
-      if (data.issues?.length === 0) {
-        setMessage({ text: "No issues found", type: "info" });
-      } else {
-        setMessage({ text: `Success! ${data.issues.length} issues loaded directly via browser.`, type: "success" });
-      }
-      
-      // Save query preset if requested
       if (shouldSaveQuery && queryName) {
         await fetch("/api/user/queries", {
           method: "POST",
@@ -151,9 +167,9 @@ export default function Dashboard() {
         if (typeof fetchSavedQueries === 'function') fetchSavedQueries();
       }
     } catch (err: any) {
-      console.error("Browser-side fetch failed:", err);
+      console.error("Bridge fetch failed:", err);
       setMessage({ 
-        text: `Browser connection failed: ${err.message}. Lütfen CORS eklentinizin aktif olduğundan emin olun.`, 
+        text: `Error: ${err.message}. Lütfen hazırladığımız 'chrome-extension' klasörünü tarayıcınıza yükleyin.`, 
         type: "danger" 
       });
     } finally {

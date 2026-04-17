@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "FocusOnCCSI Jira Bridge",
+  "version": "1.0",
+  "description": "Bypass WAF/CORS for FocusOnCCSI Jira Integration",
+  "permissions": ["declarativeNetRequest", "storage"],
+  "host_permissions": [
+    "https://jira.turkcell.com.tr/*",
+    "https://focusonccsi.vercel.app/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://focusonccsi.vercel.app/*",
+        "http://localhost:3000/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}
