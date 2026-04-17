@@ -121,10 +121,12 @@ export default function Dashboard() {
       
       const res = await fetch(`${jiraUrl}/rest/api/2/search`, {
         method: "POST",
+        credentials: 'include', // TARAYICI OTURUMUNU (COOKIES) KULLANMAK İÇİN
         headers: {
           "Authorization": `Bearer ${tokenToUse}`,
           "Accept": "application/json",
           "Content-Type": "application/json",
+          "X-Atlassian-Token": "no-check", // CSRF KONTROLÜNÜ ATLAMAK İÇİN
         },
         body: JSON.stringify({ 
           jql, 
