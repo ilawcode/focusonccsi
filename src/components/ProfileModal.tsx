@@ -114,6 +114,25 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
               </div>
             </div>
 
+            <div className="mb-5 pb-4 border-bottom border-secondary p-3 rounded" style={{ backgroundColor: "rgba(59, 130, 246, 0.05)", border: "1px dashed rgba(59, 130, 246, 0.3)" }}>
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="mb-1 text-primary"><i className="bi bi-plugin me-2"></i>Jira Bridge Extension</h6>
+                  <p className="text-muted small mb-0">
+                    Bypass WAF restrictions and connect directly to your local Jira instance.
+                  </p>
+                </div>
+                <div className="d-flex gap-2">
+                  <a href="/focusonccsi-bridge.zip" download className="btn btn-sm btn-outline-primary">
+                    <i className="bi bi-download me-1"></i> Download ZIP
+                  </a>
+                  <a href="/setup" target="_blank" className="btn btn-sm btn-primary">
+                    <i className="bi bi-book me-1"></i> Setup Guide
+                  </a>
+                </div>
+              </div>
+            </div>
+
             <div>
               <h6 className="mb-3 text-accent"><i className="bi bi-bookmark-star me-2"></i>My Saved JQL Queries</h6>
               {savedQueries.length === 0 ? (
