@@ -41,37 +41,59 @@ export async function POST(req: Request) {
     const fields = jiraFields.join(",");
     const fullUrl = `${jiraUrl}/rest/api/2/search`;
     
-    console.log(`Connecting to Jira: ${fullUrl}`);
+    console.log(`[Jira Proxy] Fetching: ${fullUrl}`);
 
-    const response = await fetch(fullUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${finalToken}`,
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        jql: jql,
-        fields: jiraFields,
-        maxResults: 50,
-      }),
-    });
+    try {
+      const response = await fetch(fullUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${finalToken}`,
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jql: jql,
+          fields: jiraFields,
+          maxResults: 50,
+        }),
+      });
 
-    console.log(`Jira Response Status: ${response.status} ${response.statusText}`);
-    const contentType = response.headers.get("content-type");
-    console.log(`Content-Type: ${contentType}`);
+      console.log(`[Jira Proxy] Response Status: ${response.status} ${response.statusText}`);
 
-    if (contentType && contentType.includes("application/json")) {
-      const data = await response.json();
-      return NextResponse.json(data);
-    } else {
-      const text = await response.text();
+      const contentType = response.headers.get("content-type");
+      
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        
+        if (!response.ok) {
+          console.error(`[Jira Proxy] Jira Error Data:`, JSON.stringify(data));
+          return NextResponse.json(
+            { message: `Jira Error: ${response.status}`, details: data },
+            { status: response.status }
+          );
+        }
+        
+        return NextResponse.json(data);
+      } else {
+        const text = await response.text();
+        console.error(`[Jira Proxy] Non-JSON Response (${response.status}):`, text.slice(0, 500));
+        return NextResponse.json(
+          { 
+            message: `Jira returned non-JSON response (${response.status})`, 
+            details: text.slice(0, 200) 
+          },
+          { status: 502 } // Bad Gateway
+        );
+      }
+    } catch (fetchError: any) {
+      console.error(`[Jira Proxy] Fetch Exception:`, fetchError.message);
       return NextResponse.json(
-        { message: "Jira returned non-JSON response. Check your Instance URL.", details: text.slice(0, 200) },
-        { status: 500 }
+        { message: "Failed to reach Jira server", error: fetchError.message },
+        { status: 504 } // Gateway Timeout
       );
     }
   } catch (error: any) {
+    console.error(`[Jira Proxy] Internal Route Error:`, error.message);
     return NextResponse.json(
       { message: error.message || "Something went wrong" },
       { status: 500 }
